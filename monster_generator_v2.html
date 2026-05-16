@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🎲 怪物產生器</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:#f8f7f4;min-height:100vh;padding:1rem}
+h1{font-size:20px;font-weight:700;color:#1a1a1a;margin-bottom:1rem;text-align:center}
+.select-section{background:#fff;border-radius:14px;border:0.5px solid #e0ddd5;padding:1rem;margin-bottom:1rem}
+.select-title{font-size:13px;font-weight:600;color:#5f5e5a;margin-bottom:8px}
+.btn-group{display:flex;flex-wrap:wrap;gap:6px}
+.btn{padding:8px 14px;border-radius:10px;border:1.5px solid #e0ddd5;background:#fff;font-size:13px;color:#1a1a1a;cursor:pointer;transition:all .15s;font-weight:500}
+.btn:active{transform:scale(0.97)}
+.btn.on{border-color:#534AB7;background:#EEEDFE;color:#3C3489;font-weight:600}
+.gen-btn{width:100%;padding:14px;background:#534AB7;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-bottom:1rem;letter-spacing:0.02em}
+.gen-btn:active{background:#3C3489;transform:scale(0.98)}
+.result{display:none}
+.result.show{display:block}
+.result-header{background:#1a1a1a;border-radius:14px 14px 0 0;padding:.85rem 1rem;display:flex;justify-content:space-between;align-items:center}
+.result-title{color:#fff;font-size:15px;font-weight:700}
+.result-badge{font-size:11px;padding:3px 10px;border-radius:8px;font-weight:600}
+.badge-1{background:#E1F5EE;color:#0A5C44}
+.badge-2{background:#E6F1FB;color:#0C447C}
+.badge-3{background:#FAEEDA;color:#633806}
+.badge-4{background:#FCEBEB;color:#8B0000}
+.monster-list{background:#fff;border:0.5px solid #e0ddd5;border-top:none;border-radius:0 0 14px 14px;overflow:hidden}
+.monster-card{padding:.85rem 1rem;border-bottom:0.5px solid #f1efe8}
+.monster-card:last-child{border-bottom:none}
+.mc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.mc-name{font-size:16px;font-weight:700;color:#1a1a1a}
+.mc-count{font-size:13px;color:#5f5e5a;font-weight:500;margin-top:2px}
+.mc-stats{display:flex;gap:6px}
+.mc-stat{background:#f1efe8;border-radius:8px;padding:4px 10px;text-align:center}
+.mc-sl{font-size:10px;color:#5f5e5a}
+.mc-sv{font-size:15px;font-weight:700;color:#1a1a1a}
+.mc-ability{margin-top:8px;background:#f8f7f4;border-radius:8px;padding:7px 10px;font-size:12px;color:#1a1a1a;line-height:1.7}
+.mc-ability-title{font-size:10px;font-weight:600;color:#5f5e5a;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.04em}
+.mc-trait{margin-top:6px;display:flex;align-items:flex-start;gap:6px;background:#EEEDFE;border-radius:8px;padding:7px 10px}
+.mc-trait-icon{font-size:16px;flex-shrink:0}
+.mc-trait-text{font-size:12px;color:#3C3489;line-height:1.5}
+.mc-trait-label{font-weight:600}
+.boss-banner{background:linear-gradient(135deg,#8B0000,#A32D2D);border-radius:10px;padding:10px 14px;margin-bottom:0;color:#fff;font-size:13px;font-weight:600;text-align:center;letter-spacing:0.03em}
+.phase-label{padding:8px 1rem;background:#f1efe8;font-size:12px;font-weight:600;color:#5f5e5a;border-bottom:0.5px solid #e0ddd5}
+</style>
+</head>
+<body>
+
+<h1>🎲 怪物產生器</h1>
+
+<div class="select-section">
+  <div class="select-title">📍 場地選擇</div>
+  <div class="btn-group" id="location-btns">
+    <button class="btn" data-v="inn" onclick="selectBtn(this,'loc')">🍺 旅館</button>
+    <button class="btn" data-v="forest" onclick="selectBtn(this,'loc')">🌲 森林</button>
+    <button class="btn" data-v="dungeon" onclick="selectBtn(this,'loc')">⚰️ 地下墓穴</button>
+    <button class="btn" data-v="wall" onclick="selectBtn(this,'loc')">🏯 城牆</button>
+    <button class="btn" data-v="tower" onclick="selectBtn(this,'loc')">🗼 巫師塔</button>
+    <button class="btn" data-v="boss" onclick="selectBtn(this,'loc')">💀 BOSS場</button>
+  </div>
+</div>
+
+<div class="select-section" id="level-section">
+  <div class="select-title">⚔️ 強度選擇</div>
+  <div class="btn-group" id="level-btns">
+    <button class="btn" data-v="1" onclick="selectBtn(this,'lv')">1 熱身</button>
+    <button class="btn" data-v="2" onclick="selectBtn(this,'lv')">2 普通</button>
+    <button class="btn" data-v="3" onclick="selectBtn(this,'lv')">3 困難</button>
+    <button class="btn" data-v="4" onclick="selectBtn(this,'lv')">4 精英</button>
+  </div>
+</div>
+
+<button class="gen-btn" onclick="generate()">🎲 產生怪物組合</button>
+
+<div class="result" id="result">
+  <div class="result-header">
+    <div class="result-title" id="result-title">—</div>
+    <div class="result-badge" id="result-badge">—</div>
+  </div>
+  <div class="monster-list" id="monster-list"></div>
+</div>
+
+<script>
+let selLoc = null;
+let selLv = null;
+
+function selectBtn(el, type) {
+  const group = type === 'loc' ? 'location-btns' : 'level-btns';
+  document.getElementById(group).querySelectorAll('.btn').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  if (type === 'loc') {
+    selLoc = el.dataset.v;
+    document.getElementById('level-section').style.display = selLoc === 'boss' ? 'none' : 'block';
+    if (selLoc === 'boss') selLv = 'boss';
+  } else {
+    selLv = el.dataset.v;
+  }
+}
+
+const TRAITS = [
+  {icon:'🎵', label:'愛音樂', desc:'牠似乎很享受周圍的聲音，甚至跟著節奏擺動。吟遊詩人可以嘗試用歌唱來影響牠。'},
+  {icon:'😰', label:'膽小', desc:'牠一直往後退，眼神飄移不定。大聲恐嚇或展示力量，可能讓牠猶豫。'},
+  {icon:'🍖', label:'飢餓', desc:'牠的視線一直往食物或氣味飄。也許丟出食物能吸引牠的注意。'},
+  {icon:'✨', label:'好奇', desc:'牠對閃亮的東西或奇怪的聲音有強烈反應。可以試著用道具分散牠的注意力。'},
+  {icon:'😴', label:'疲倦', desc:'牠的動作有些遲緩，偶爾打了個哈欠。也許能趁機讓牠更容易被擊倒。'},
+  {icon:'😡', label:'憤怒', desc:'牠顯得異常暴躁，攻擊前會先咆哮。可以試著激怒牠讓牠失去冷靜，或讓牠攻擊錯誤目標。'},
+  {icon:'🥺', label:'孤獨', desc:'牠一個人站在角落，跟其他怪物保持距離。也許友善的接近，能讓牠猶豫是否要戰鬥。'},
+  {icon:'👑', label:'驕傲', desc:'牠抬著頭，姿態高傲，不屑正視你們。真誠的讚美或挑戰牠的尊嚴，可能讓牠放鬆警戒。'},
+  {icon:'🤔', label:'困惑', desc:'牠似乎不確定自己在做什麼，時常停下來發呆。趁牠分神時攻擊效果更好。'},
+  {icon:'😤', label:'好勝', desc:'牠一直盯著看起來最強的角色，想要一對一決鬥。可以利用這點讓牠專注在特定目標上。'},
+];
+
+const MONSTERS = {
+  slime:      { name:'史萊姆',     hp:[6,8],   atk:[3,4], def:0, special:'免疫物理攻擊｜攻擊成功後目標需擲骰檢定，骰 1–10 被吞入肚中，每次史萊姆回合結束被消化扣除 2 點生命' },
+  spider:     { name:'蜘蛛',       hp:[8,10],  atk:[4,5], def:0, special:'命中時 50% 機率讓目標下回合跳過行動（被網住）' },
+  skeleton:   { name:'骷髏兵',     hp:[8,10],  atk:[4,5], def:1, special:'無' },
+  mushroom:   { name:'巨菇人',     hp:[10,12], atk:[4,5], def:1, special:'死亡時爆炸，對全體造成 3 點傷害' },
+  owlbear:    { name:'梟熊',       hp:[16,20], atk:[6,7], def:2, special:'每 2 回合嚎叫一次，對全體造成 3 點傷害' },
+  displacer:  { name:'位移獸',     hp:[12,16], atk:[5,6], def:1, special:'攻擊前投影假象，玩家需骰 11+ 才能打到本體；受傷後假象消失並於下回合重新投影' },
+  skelemage:  { name:'骷髏法師',   hp:[10,14], atk:[5,6], def:0, special:'魔法飛彈直接命中造成 5 傷（不需擲骰）｜每 3 回合可復活一隻已倒地的骷髏兵' },
+  mindworm:   { name:'腦怪',       hp:[14,18], atk:[5,6], def:1, special:'每 2 回合精神控制一名玩家，使其下回合跳過行動' },
+  beholder:   { name:'眼魔',       hp:[16,20], atk:[6,7], def:1, special:'玩家每次施放技能前須先擲骰，骰 11+ 才可繼續施展，否則技能失敗（能量不退還）' },
+  mimic:      { name:'寶箱怪',     hp:[18,22], atk:[7,8], def:2, special:'HP 降至一半時爆發，對全體造成 5 點傷害｜擊倒後掉落回血藥水 ×1' },
+  mindflayer: { name:'奪心魔',     hp:[14,18], atk:[6,7], def:1, special:'遭受攻擊時由 GM 擲骰，骰 16+ 玩家被奪心，該次攻擊對象改為 GM 指定的另一名玩家' },
+  vampire:    { name:'吸血鬼領主', hp:[22,28], atk:[7,8], def:2, special:'每回合自動回復 3 點生命｜受到傷害時 30% 機率對攻擊者反噬 2 點傷害' },
+  lich:       { name:'紅袍巫妖',   hp:[18,24], atk:[6,7], def:1, special:'烈焰爆炸：對全體造成 4 傷｜死亡射線：對單體造成 8 傷｜召喚骷髏兵：每 2 回合召喚 2 隻骷髏兵加入戰鬥' },
+  wizard:     { name:'邪惡巫師',   hp:[22,22], atk:[6,6], def:2, special:'閃電鏈：對全體造成 4 傷（穿透減傷）｜死亡凝視：指定玩家下回合跳過行動｜召喚守衛：召喚怪物加入戰鬥' },
+  dragon:     { name:'紅龍',       hp:[30,35], atk:[8,8], def:3, special:'龍息烈焰：對全體造成 6 傷（穿透減傷）｜利爪橫掃：對單體造成 5 傷｜龍威：全體玩家各自擲骰，骰 1–5 暈眩跳過下回合行動' },
+};
+
+function getMonster(key, lv) {
+  const m = MONSTERS[key];
+  const tier = (lv <= 2) ? 0 : 1;
+  return { ...m, hp: m.hp[tier], atk: m.atk[tier] };
+}
+
+const ENCOUNTERS = {
+  inn: {
+    1: [ [['skeleton',1]], [['skeleton',2]], [['slime',1],['skeleton',1]] ],
+    2: [ [['skeleton',2],['skelemage',1]], [['displacer',1]], [['skeleton',1],['slime',2]] ],
+    3: [ [['skeleton',2],['skelemage',1],['displacer',1]], [['vampire',1],['skeleton',1]], [['skelemage',1],['displacer',1]] ],
+    4: [ [['vampire',1],['skeleton',2]], [['vampire',1],['skelemage',1]], [['displacer',2],['skelemage',1]] ],
+  },
+  forest: {
+    1: [ [['spider',2]], [['slime',1],['mushroom',1]], [['spider',1],['mushroom',1]] ],
+    2: [ [['spider',2],['mushroom',1]], [['owlbear',1]], [['spider',2],['slime',1]] ],
+    3: [ [['owlbear',1],['mushroom',2]], [['owlbear',1],['spider',2]], [['displacer',1],['mushroom',2]] ],
+    4: [ [['owlbear',1],['displacer',1]], [['displacer',2],['owlbear',1]], [['spider',2],['mushroom',2],['owlbear',1]] ],
+  },
+  dungeon: {
+    1: [ [['skeleton',1],['mushroom',1]], [['skeleton',2]], [['slime',2]] ],
+    2: [ [['skelemage',1],['skeleton',1]], [['mindworm',1]], [['mushroom',2],['skeleton',1]] ],
+    3: [ [['mindworm',1],['mindflayer',1]], [['skelemage',1],['mushroom',2]], [['mindworm',1],['skeleton',2]] ],
+    4: [ [['lich',1],['skeleton',2]], [['mindflayer',1],['mindworm',1]], [['lich',1],['skelemage',1]] ],
+  },
+  wall: {
+    1: [ [['skeleton',2]], [['skeleton',1],['spider',1]] ],
+    2: [ [['beholder',1],['skeleton',1]], [['skeleton',2],['skelemage',1]] ],
+    3: [ [['vampire',1],['skeleton',2]], [['beholder',1],['skeleton',2]], [['mimic',1]] ],
+    4: [ [['vampire',1],['beholder',1]], [['vampire',1],['skelemage',1],['skeleton',1]], [['mimic',1],['vampire',1]] ],
+  },
+  tower: {
+    1: [ [['skelemage',1],['skeleton',1]], [['skeleton',2],['slime',1]] ],
+    2: [ [['lich',1]], [['beholder',1],['mindworm',1]], [['skelemage',1],['skeleton',2]] ],
+    3: [ [['lich',1],['mindflayer',1]], [['beholder',1],['vampire',1]], [['lich',1],['skeleton',2]] ],
+    4: [ [['lich',1],['vampire',1]], [['lich',1],['beholder',1],['skeleton',2]], [['mindflayer',1],['lich',1],['skelemage',1]] ],
+  },
+  boss: {
+    boss: [
+      { phases: [ [['wizard',1],['skeleton',2]], [['dragon',1]] ] },
+      { phases: [ [['wizard',1],['mindflayer',1]], [['dragon',1]] ] },
+      { phases: [ [['wizard',1],['beholder',1]], [['dragon',1]] ] },
+      { phases: [ [['wizard',1],['lich',1]], [['dragon',1]] ] },
+    ],
+  },
+};
+
+const LEVEL_NAMES = { 1:'熱身', 2:'普通', 3:'困難', 4:'精英', boss:'BOSS' };
+const LEVEL_BADGE_CLS = { 1:'badge-1', 2:'badge-2', 3:'badge-3', 4:'badge-4', boss:'badge-4' };
+const LOC_NAMES = { inn:'🍺 旅館', forest:'🌲 森林', dungeon:'⚰️ 地下墓穴', wall:'🏯 城牆', tower:'🗼 巫師塔', boss:'💀 BOSS場' };
+
+function randItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function randTrait() { return TRAITS[Math.floor(Math.random() * TRAITS.length)]; }
+
+function renderMonster(key, count, lvNum) {
+  const m = getMonster(key, lvNum);
+  const trait = randTrait();
+  return `
+    <div class="monster-card">
+      <div class="mc-top">
+        <div>
+          <div class="mc-name">${m.name}</div>
+          ${count > 1 ? `<div class="mc-count">×${count} 隻</div>` : ''}
+        </div>
+        <div class="mc-stats">
+          <div class="mc-stat"><div class="mc-sl">生命</div><div class="mc-sv">${m.hp}</div></div>
+          <div class="mc-stat"><div class="mc-sl">攻擊</div><div class="mc-sv">${m.atk}</div></div>
+          <div class="mc-stat"><div class="mc-sl">減傷</div><div class="mc-sv">${m.def}</div></div>
+        </div>
+      </div>
+      ${m.special !== '無' ? `
+      <div class="mc-ability">
+        <div class="mc-ability-title">⚡ 特殊能力</div>
+        ${m.special}
+      </div>` : ''}
+      <div class="mc-trait">
+        <div class="mc-trait-icon">${trait.icon}</div>
+        <div class="mc-trait-text"><span class="mc-trait-label">${trait.label}：</span>${trait.desc}</div>
+      </div>
+    </div>`;
+}
+
+function generate() {
+  if (!selLoc) { alert('請先選擇場地！'); return; }
+  if (!selLv) { alert('請先選擇強度！'); return; }
+
+  const pool = ENCOUNTERS[selLoc][selLv];
+  const picked = randItem(pool);
+  const lvNum = selLv === 'boss' ? 4 : parseInt(selLv);
+
+  document.getElementById('result-title').textContent = LOC_NAMES[selLoc];
+  const badge = document.getElementById('result-badge');
+  badge.textContent = `強度 ${LEVEL_NAMES[selLv]}`;
+  badge.className = 'result-badge ' + LEVEL_BADGE_CLS[selLv];
+
+  const list = document.getElementById('monster-list');
+  let html = '';
+
+  if (selLoc === 'boss') {
+    html += `<div class="boss-banner">💀 BOSS 決戰！巫師與紅龍的兩階段挑戰！</div>`;
+    picked.phases.forEach((phase, wi) => {
+      html += `<div class="phase-label">${wi === 0 ? '⚔️ 第一階段' : '🐉 第二階段'}</div>`;
+      phase.forEach(([key, count]) => { html += renderMonster(key, count, lvNum); });
+    });
+  } else {
+    picked.forEach(([key, count]) => { html += renderMonster(key, count, lvNum); });
+  }
+
+  list.innerHTML = html;
+  document.getElementById('result').className = 'result show';
+  document.getElementById('result').scrollIntoView({behavior:'smooth'});
+}
+</script>
+</body>
+</html>
